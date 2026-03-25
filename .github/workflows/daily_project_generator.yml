@@ -1,0 +1,17 @@
+name: Daily Project Generator
+
+on:
+  schedule:
+    - cron: '0 13 * * *'  # Runs every day at 1 PM UTC (7 AM CST)
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v2
+
+      - name: Generate AI/ML Project Templates
+        run: |
+          echo "Generating AI/ML project templates with trending topics..."
+          # Add your project generation/upload script here
