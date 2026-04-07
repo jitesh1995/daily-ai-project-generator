@@ -1,0 +1,73 @@
+name: AI Daily Code Generator
+
+on:
+  schedule:
+    - cron: '0 16 * * *'
+    - cron: '0 17 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  generate-code:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install openai
+
+      - name: Generate Code
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          python <<EOF
+          import os
+          from datetime import datetime
+          from openai import OpenAI
+
+          client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+          prompt = f"""
+          Generate a complete Python project file.
+          Topic: DevOps, Cloud, or AI automation.
+          Include:
+          - meaningful logic
+          - comments
+          - real-world use case
+          """
+
+          response = client.chat.completions.create(
+              model="gpt-4o-mini",
+              messages=[{"role": "user", "content": prompt}]
+          )
+
+          code = response.choices[0].message.content
+
+          folder = "daily_code"
+          os.makedirs(folder, exist_ok=True)
+
+          filename = f"{folder}/project_{datetime.now().strftime('%Y%m%d_%H%M%S')}.py"
+
+          with open(filename, "w") as f:
+              f.write(code)
+
+          print(f"Generated: {filename}")
+          EOF
+
+      - name: Commit and Push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "actions@github.com"
+
+          git add .
+          git commit -m "feat: daily AI-generated project 🚀" || echo "No changes"
+          git push
